@@ -1,11 +1,21 @@
 "use client"
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import {  useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { FaLocationDot } from "react-icons/fa6";
 import { RiCalendarCheckFill } from "react-icons/ri";
 import { RiUserLine } from "react-icons/ri";
+
+interface SearchFormProps {
+  defaultTab?: "hotels" | "tours";
+  initialLocation?: string;
+  initialStartDate?: Date | null;
+  initialEndDate?: Date | null;
+  initialAdults?: number;
+  initialChildren?: number;
+  initialRooms?: number;
+}
 
 type GuestRowProps = {
   label: string;
@@ -47,19 +57,29 @@ const GuestRow = ({
   </div>
 );
 
-const SearchForm = ({ defaultTab = "hotels" }: { defaultTab?: "hotels" | "tours" }) => {
+const SearchForm = ({
+  defaultTab = "hotels",
+  initialLocation = "",
+  initialStartDate = null,
+  initialEndDate = null,
+  initialAdults = 1,
+  initialChildren = 0,
+  initialRooms = 1,
+}: SearchFormProps) => {
   const router = useRouter();
   const places = ["Lagos", "Abuja", "Kano", "Ibadan"];
   const [selectedTab, setSelectedTab] = useState<"hotels" | "tours">(defaultTab);
-  const [location, setLocation] = useState("");
+   const [location, setLocation] = useState(initialLocation);
   const [filteredPlaces, setFilteredPlaces] = useState<string[]>([]);
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+   const [startDate, setStartDate] = useState<Date | null>(initialStartDate);
+  const [endDate, setEndDate] = useState<Date | null>(initialEndDate);
   const [showGuestDropdown, setShowGuestDropdown] = useState(false);
-  const [adults, setAdults] = useState(1);
-  const [children, setChildren] = useState(0);
-  const [rooms, setRooms] = useState(1);
+   const [adults, setAdults] = useState(initialAdults);
+  const [children, setChildren] = useState(initialChildren);
+  const [rooms, setRooms] = useState(initialRooms);
+  
+ 
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -77,6 +97,7 @@ const SearchForm = ({ defaultTab = "hotels" }: { defaultTab?: "hotels" | "tours"
     setShowLocationDropdown(false);
   };
 
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -85,11 +106,14 @@ const SearchForm = ({ defaultTab = "hotels" }: { defaultTab?: "hotels" | "tours"
       return;
     }
 
+     const formatDate = (date: Date | null) =>
+    date ? date.toISOString().split("T")[0] : "";
+
     // Option 1: Pass search data via query params
     const queryParams = new URLSearchParams({
       location,
-      start: startDate?.toISOString() || "",
-      end: endDate?.toISOString() || "",
+       start: formatDate(startDate),
+    end: formatDate(endDate),
       adults: adults.toString(),
       children: children.toString(),
       rooms: rooms.toString(),
