@@ -1,8 +1,13 @@
 @import "tailwindcss";
 
+
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #000;
+  
+}
+@theme{
+--color-primary: #3cb043;
 }
 
 @theme inline {
@@ -20,7 +25,11 @@
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+ background-color: #fff;
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.custom-datepicker-wrapper {
+  width: 100% !important;
+  display: block;
 }
