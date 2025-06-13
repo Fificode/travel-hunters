@@ -1,33 +1,22 @@
-// import { useQuery } from '@tanstack/react-query';
-
-// const fetchHotels = async () => {
-//   const res = await fetch("https://sandbox.thetravelhunters.com/hotel/hotels/");
-//   if (!res.ok) throw new Error("Failed to fetch hotels");
-//   const data = await res.json();
-//   return data.results; 
-// };
-
-// export const useHotels = () => {
-//   return useQuery({
-//     queryKey: ['hotels'],
-//     queryFn: fetchHotels,
-   
-//   });
-// };
-
 import { useQuery } from "@tanstack/react-query";
+import { Hotel, Room } from "../utils/types";
 
 type UseHotelsParams = {
   location?: string;
   startDate?: Date;
   endDate?: Date;
-  rooms?: number;
+  adultCount?: number;
+  childCount?: number;
+  roomCount?: number;
 };
 
 const normalize = (str: string) =>
-  str.toLowerCase().replace(/\s+/g, "").replace(/[^a-z]/g, "");
+  str
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .replace(/[^a-z]/g, "");
 
-const matchesLocation = (hotel: any, location: string) => {
+const matchesLocation = (hotel: Hotel | undefined, location: string) => {
   const target = normalize(location);
 
   const fields = [
@@ -45,18 +34,35 @@ const matchesLocation = (hotel: any, location: string) => {
   return fields.some((field) => normalize(field || "") === target);
 };
 
-export const useHotels = ({ location, startDate, endDate, rooms }: UseHotelsParams = {}) => {
+export const useHotels = ({
+  location,
+  startDate,
+  endDate,
+  adultCount,
+  childCount,
+  roomCount,
+}: UseHotelsParams = {}) => {
   return useQuery({
-    queryKey: ['hotels', location, startDate?.toISOString(), endDate?.toISOString(), rooms],
+    queryKey: [
+      "hotels",
+      location,
+      startDate?.toISOString(),
+      endDate?.toISOString(),
+      adultCount,
+      childCount,
+      roomCount,
+    ],
     queryFn: async () => {
-      const res = await fetch("https://sandbox.thetravelhunters.com/hotel/hotels/");
+      const res = await fetch(
+        "https://sandbox.thetravelhunters.com/hotel/hotels/"
+      );
       const data = await res.json();
       let results = data.results;
 
       // Location filtering
       if (location) {
-        results = results.filter(hotel =>
-          hotel.rooms?.some((room: any) =>
+        results = results.filter((hotel: Hotel) =>
+          hotel.rooms?.some((room: Room) =>
             matchesLocation(room.hotel, location)
           )
         );
@@ -64,9 +70,9 @@ export const useHotels = ({ location, startDate, endDate, rooms }: UseHotelsPara
 
       // Date range filtering
       if (startDate && endDate) {
-        results = results.filter(hotel =>
-          hotel.rooms?.some((room: any) =>
-            room.late_night_date?.some((dateObj: any) => {
+        results = results.filter((hotel: Hotel) =>
+          hotel.rooms?.some((room: Room) =>
+            room.late_night_date?.some((dateObj) => {
               const d = new Date(dateObj.late_night_date);
               return d >= startDate && d <= endDate;
             })
@@ -74,10 +80,23 @@ export const useHotels = ({ location, startDate, endDate, rooms }: UseHotelsPara
         );
       }
 
-      // Rooms filtering
-      if (rooms !== undefined) {
-        results = results.filter(hotel =>
-          hotel.rooms?.length >= rooms
+ // Combined capacity filtering
+      if (adultCount !== undefined || childCount !== undefined || roomCount !== undefined) {
+        const requiredPeople = (adultCount || 0) + (childCount || 0);
+        const requiredRooms = roomCount || 1;
+
+        results = results.filter((hotel : Hotel) =>
+          hotel.rooms?.some((room: Room) => {
+            const capacityPerRoom = room.rooms_capacity ?? 0;
+            const availableRooms = room.number_of_rooms ?? 0;
+
+            const totalCapacity = capacityPerRoom * availableRooms;
+
+            return (
+              availableRooms >= requiredRooms &&
+              totalCapacity >= requiredPeople
+            );
+          })
         );
       }
 

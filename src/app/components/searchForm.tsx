@@ -75,9 +75,10 @@ const SearchForm = ({
    const [startDate, setStartDate] = useState<Date | null>(initialStartDate);
   const [endDate, setEndDate] = useState<Date | null>(initialEndDate);
   const [showGuestDropdown, setShowGuestDropdown] = useState(false);
-   const [adults, setAdults] = useState(initialAdults);
-  const [children, setChildren] = useState(initialChildren);
-  const [rooms, setRooms] = useState(initialRooms);
+   const [adultCount, setAdultCount] = useState(initialAdults);
+const [childCount, setChildCount] = useState(initialChildren);
+const [roomCount, setRoomCount] = useState(initialRooms);
+
   
  
 
@@ -114,9 +115,9 @@ const SearchForm = ({
       location,
        start: formatDate(startDate),
     end: formatDate(endDate),
-      adults: adults.toString(),
-      children: children.toString(),
-      rooms: rooms.toString(),
+      adultCount: adultCount.toString(),
+  childCount: childCount.toString(),
+  roomCount: roomCount.toString(),
     });
 
     router.push(`/hotelList?${queryParams.toString()}`);
@@ -173,7 +174,7 @@ const SearchForm = ({
 
               {/* Location input field */}
               <input
-                type="text"
+                type="search"
                 className="w-full pl-10 pt-5 pr-4 pb-1 border border-gray-300 rounded-md text-[14px] text-gray-900 bg-transparent outline-primary"
                 value={location}
                 onChange={handleInputChange}
@@ -238,9 +239,9 @@ const SearchForm = ({
                 className="w-full pl-10 pt-5 pr-4 pb-2 border text-[14px] border-gray-300 rounded-md outline-primary cursor-pointer"
                 onClick={() => setShowGuestDropdown(!showGuestDropdown)}
               >
-                {`${adults} Adult${adults > 1 ? "s" : ""}, ${children} Child${
-                  children !== 1 ? "ren" : ""
-                }, ${rooms} Room${rooms > 1 ? "s" : ""}`}
+                {`${adultCount} Adult${adultCount > 1 ? "s" : ""}, ${childCount} Child${
+                  childCount !== 1 ? "ren" : ""
+                }, ${roomCount} Room${roomCount > 1 ? "s" : ""}`}
               </div>
               {/* Room selector dropdown */}
               {showGuestDropdown && (
@@ -249,26 +250,26 @@ const SearchForm = ({
                   <GuestRow
                     label="Adults"
                     subLabel="> 12 years"
-                    count={adults}
-                    onDecrement={() => setAdults(Math.max(1, adults - 1))}
-                    onIncrement={() => setAdults(adults + 1)}
+                    count={adultCount}
+                    onDecrement={() => setAdultCount(Math.max(1, adultCount - 1))}
+                    onIncrement={() => setAdultCount(adultCount + 1)}
                   />
 
                   {/* Children */}
                   <GuestRow
                     label="Children"
                     subLabel="2–12 years"
-                    count={children}
-                    onDecrement={() => setChildren(Math.max(0, children - 1))}
-                    onIncrement={() => setChildren(children + 1)}
+                    count={childCount}
+                    onDecrement={() => setChildCount(Math.max(0, childCount - 1))}
+                    onIncrement={() => setChildCount(childCount + 1)}
                   />
 
                   {/* Rooms */}
                   <GuestRow
                     label="Rooms"
-                    count={rooms}
-                    onDecrement={() => setRooms(Math.max(1, rooms - 1))}
-                    onIncrement={() => setRooms(rooms + 1)}
+                    count={roomCount}
+                    onDecrement={() => setRoomCount(Math.max(1, roomCount - 1))}
+                    onIncrement={() => setRoomCount(roomCount + 1)}
                   />
 
                   <div className="flex justify-end pt-2">
