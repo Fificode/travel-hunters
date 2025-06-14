@@ -33,3 +33,25 @@ body {
   width: 100% !important;
   display: block;
 }
+input[type="range"]::-webkit-slider-thumb {
+          height: 18px;
+          width: 18px;
+          border-radius: 50%;
+          background: #00674F;
+          cursor: pointer;
+          -webkit-appearance: none;
+          margin-top: -7px; /* Center in track (16px thumb - 2px track) / 2 */
+        }
+        input[type="range"]::-moz-range-thumb {
+          height: 18px;
+          width: 18px;
+          border-radius: 50%;
+          background: #00674F;
+          cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+          height: 2px;
+        }
+        input[type="range"]::-moz-range-track {
+          height: 2px;
+        }

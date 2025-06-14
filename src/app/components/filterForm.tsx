@@ -1,32 +1,23 @@
-// import { Slider } from "@chakra-ui/react";
+import RangeSlider from "./RangeSlider";
 
 const FilterForm = () => {
   return (
-    <div>
-      <div className="w-[30%] h-[300px] flex items-center justify-around mb-5 border border-red-400">
-        <label
-          htmlFor="sliderMin"
-          className="bg-[#cae9fca8] text-black text-xs font-semibold rounded-sm w-9 h-9 flex justify-center items-center pb-0"
-        >
-          0
-        </label>
-        <div className="">
-          {/* <Slider.Root width="200px" defaultValue={[30, 60]}>
-            <Slider.Control>
-              <Slider.Track>
-                <Slider.Range />
-              </Slider.Track>
-              <Slider.Thumbs />
-            </Slider.Control>
-          </Slider.Root> */}
+    <div className="h-auto p-2 rounded-md mb-5 bg-[#303030] flex flex-col gap-2 ">
+      <div className="w-full mx-auto p-6 bg-white rounded-lg shadow flex flex-col gap-2">
+        <h2>Popular filters</h2>
+        <div className="flex justify-between flex-wrap items-center w-full">
+          <div className="flex items-center gap-2 ">
+            <input type="checkbox" className="w-4 h-4 border-2" />
+            <label>Hotels</label>
+          </div>
+          <div className="flex items-center gap-2">
+            <input type="checkbox" className="w-4 h-4 border-2" />
+            <label>Apartments</label>
+          </div>
         </div>
-        <label
-          htmlFor="sliderMax"
-          className="bg-[#cae9fca8] text-black text-xs font-semibold rounded-sm w-9 h-9 flex justify-center items-center pb-0"
-        >
-          3500
-        </label>
       </div>
+
+      <RangeSlider />
     </div>
   );
 };
