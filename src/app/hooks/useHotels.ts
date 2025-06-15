@@ -31,7 +31,7 @@ const buildQueryUrl = (params: UseHotelsParams, page = 1): string => {
 
   query.append("page", String(page));
 
-  return `api/hotels/?${query.toString()}`;
+  return `/api/hotels/?${query.toString()}`;
 };
 
 export const useHotels = (params: UseHotelsParams = {}) => {
@@ -41,7 +41,7 @@ export const useHotels = (params: UseHotelsParams = {}) => {
       const url = buildQueryUrl(params, pageParam);
       const res = await fetch(url);
       const data = await res.json();
-      console.log(data);
+    
 
       return {
         count: data.count,
