@@ -9,19 +9,20 @@ const FilterForm = ({
   maxPrice,
   setMinPrice,
   setMaxPrice,
+  setHasAppliedPriceFilter
   
 }: {
   isHotelChecked: boolean;
   isApartmentChecked: boolean;
   onChange: (filters: {
     isHotelChecked: boolean;
-    isApartmentChecked: boolean;
-    
+    isApartmentChecked: boolean;  
   }) => void;
    minPrice: number;
   maxPrice: number;
   setMinPrice: (val: number) => void;
   setMaxPrice: (val: number) => void;
+  setHasAppliedPriceFilter: (val: boolean) => void;
 }) => {
  
  
@@ -67,6 +68,7 @@ const FilterForm = ({
         maxPrice={maxPrice}
         setMinPrice={setMinPrice}
         setMaxPrice={setMaxPrice}
+        setHasAppliedPriceFilter={setHasAppliedPriceFilter}
       />
     </div>
   );

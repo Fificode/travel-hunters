@@ -7,11 +7,13 @@ const RangeSlider = ({
   maxPrice,
   setMinPrice,
   setMaxPrice,
+  setHasAppliedPriceFilter
 }: {
   minPrice: number;
   maxPrice: number;
   setMinPrice: (val: number) => void;
   setMaxPrice: (val: number) => void;
+  setHasAppliedPriceFilter: (val: boolean) => void;
 }) => {
     const router = useRouter();
   const rangeRef = useRef<HTMLDivElement>(null);
@@ -98,9 +100,10 @@ const RangeSlider = ({
       <button
         onClick={() => {
           const query = new URLSearchParams(window.location.search);
-          query.set("minPrice", minPrice?.toString());
-          query.set("maxPrice", maxPrice?.toString());
+          query.set("min_price", minPrice?.toString());
+          query.set("max_price", maxPrice?.toString());
           router.push(`/hotelList?${query?.toString()}`);
+          setHasAppliedPriceFilter(true);
         }}
         className="w-full bg-emerald-700 text-white text-sm p-2 rounded-md my-2 cursor-pointer"
       >

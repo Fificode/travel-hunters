@@ -1,91 +1,134 @@
 "use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo } from "react";
 import SearchForm from "@/app/components/searchForm";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useHotels } from "@/app/hooks/useHotels";
 import { Hotel } from "@/app/utils/types";
 import FilterForm from "@/app/components/filterForm";
 import HotelCard from "@/app/components/hotelCard";
 import FilterModal from "./FilterModal";
+import LoadMoreTrigger from "./LoadMoreTrigger";
+import { FaSpinner } from "react-icons/fa6";
 
 const HotelList = () => {
   const params = useSearchParams();
   const router = useRouter();
-  const location = params.get("location") || "";
-  const start = params.get("start");
-  const end = params.get("end");
-  const types = params.getAll("type");
-  const min = Number(params.get("minPrice") || 5000);
-  const max = Number(params.get("maxPrice") || 500000);
+  const location = params.get("ss") || "";
+  const start = params.get("startDate");
+  const end = params.get("endDate");
 
   const adultCount = Number(params.get("adultCount") || 1);
   const childCount = Number(params.get("childCount") || 0);
   const roomCount = Number(params.get("roomCount") || 1);
 
-  const startDate = start ? new Date(start) : undefined;
-  const endDate = end ? new Date(end) : undefined;
+  const startDate = useMemo(() => {
+    return start ? new Date(start) : undefined;
+  }, [start]);
 
-  const [isHotelChecked, setIsHotelChecked] = useState(types.includes("hotel"));
+  const endDate = useMemo(() => {
+    return end ? new Date(end) : undefined;
+  }, [end]);
+
+  const initialHotelChecked = params.get("pt") === "hotel";
+  const initialApartmentChecked = params.get("bt") === "apartments";
+  const [isHotelChecked, setIsHotelChecked] = useState(initialHotelChecked);
   const [isApartmentChecked, setIsApartmentChecked] = useState(
-    types.includes("apartment")
+    initialApartmentChecked
   );
-  const [minPrice, setMinPrice] = useState(5000);
-  const [maxPrice, setMaxPrice] = useState(500000);
 
-  const updateFilters = (filters: {
+  const initialMinPrice = Number(params.get("minPrice") || 5000);
+  const initialMaxPrice = Number(params.get("maxPrice") || 500000);
+
+  const [minPrice, setMinPrice] = useState(initialMinPrice);
+  const [maxPrice, setMaxPrice] = useState(initialMaxPrice);
+  const [hasAppliedPriceFilter, setHasAppliedPriceFilter] = useState(false);
+
+  const filters = useMemo(
+    () => ({
+      ss: location,
+      startDate: startDate?.toISOString(),
+      endDate: endDate?.toISOString(),
+      roomCount,
+      adultCount,
+      childCount,
+      pt: isHotelChecked ? "hotel" : "",
+      bt: isApartmentChecked ? "apartments" : "",
+     ...(hasAppliedPriceFilter && {
+    min_price: minPrice,
+    max_price: maxPrice,
+  }),
+    }),
+    [
+      location,
+      startDate,
+      endDate,
+      roomCount,
+      adultCount,
+      childCount,
+      isHotelChecked,
+      isApartmentChecked,
+      minPrice,
+      maxPrice,
+      hasAppliedPriceFilter
+    ]
+  );
+
+  const updateFilters = ({
+    isHotelChecked,
+    isApartmentChecked,
+  }: {
     isHotelChecked: boolean;
     isApartmentChecked: boolean;
   }) => {
-    const query = new URLSearchParams(params.toString());
+    setIsHotelChecked(isHotelChecked);
+    setIsApartmentChecked(isApartmentChecked);
 
-    // Remove existing 'type' params
-    query.delete("type");
+    const searchParams = new URLSearchParams(params.toString());
 
-    if (filters.isHotelChecked) query.append("type", "hotel");
-    if (filters.isApartmentChecked) query.append("type", "apartment");
+    // Set or delete based on the boolean
+    if (isHotelChecked) {
+      searchParams.set("pt", "hotel");
+    } else {
+      searchParams.delete("pt");
+    }
 
-    setIsHotelChecked(filters.isHotelChecked);
-    setIsApartmentChecked(filters.isApartmentChecked);
+    if (isApartmentChecked) {
+      searchParams.set("bt", "apartments");
+    } else {
+      searchParams.delete("bt");
+    }
 
-    router.push(`/hotelList?${query.toString()}`);
+    router.push(`?${searchParams.toString()}`);
   };
 
   const {
-    data: hotels,
+    data,
     isLoading,
     isError,
-  } = useHotels({
-    location: location as string,
-    startDate,
-    endDate,
-    propertyTypes: [
-      ...(isHotelChecked ? ["hotel"] : []),
-      ...(isApartmentChecked ? ["apartment"] : []),
-    ],
-    minPrice: min,
-    maxPrice: max,
-  });
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useHotels(filters);
+
   const [showFilterModal, setShowFilterModal] = useState(false);
 
-
+  const hotels = data?.pages?.flatMap((page) => page.hotels) || [];
+const totalCount = data?.pages?.[0]?.count || 0;
 
   return (
-    <div className="min-h-screen p-8 bg-gray-100 w-full">
-      <div className="w-full flex flex-col gap-2">
-        <h1 className="flex justify-center items-center my-4">
-          Travel Hunters Hotel List Page
-        </h1>
-        <SearchForm
-          defaultTab="hotels"
-          initialLocation={location}
-          initialStartDate={startDate}
-          initialEndDate={endDate}
-          initialAdults={adultCount}
-          initialChildren={childCount}
-          initialRooms={roomCount}
-        />
-      </div>
+    <div className="min-h-screen p-8 w-full">
+      <h1 className="flex justify-center items-center my-4">
+        Travel Hunters Hotel List Page
+      </h1>
+      <SearchForm
+        defaultTab="hotels"
+        initialLocation={location}
+        initialStartDate={startDate}
+        initialEndDate={endDate}
+        initialAdults={adultCount}
+        initialChildren={childCount}
+        initialRooms={roomCount}
+      />
       {isLoading && (
         <div className="flex justify-center items-center my-5">
           Loading Suggestions...
@@ -94,6 +137,11 @@ const HotelList = () => {
       {isError && (
         <div className="flex justify-center items-center my-5">Error ...</div>
       )}
+      {!isLoading && (
+  <h2 className="text-xl font-semibold">
+    {totalCount} Properties found{location ? ` in ${location}` : ""}
+  </h2>
+)}
       {/* Show filter button only on small screens */}
       <div className="md:hidden mt-6 mb-4 flex justify-start">
         <button
@@ -106,9 +154,19 @@ const HotelList = () => {
 
       {/* Filter Modal (Mobile Only) */}
       {showFilterModal && (
-        <FilterModal onClose={() => setShowFilterModal(false)} />
+        <FilterModal
+          onClose={() => setShowFilterModal(false)}
+          isHotelChecked={isHotelChecked}
+          isApartmentChecked={isApartmentChecked}
+          onChange={updateFilters}
+          minPrice={minPrice}
+          maxPrice={maxPrice}
+          setMinPrice={setMinPrice}
+          setMaxPrice={setMaxPrice}
+          setHasAppliedPriceFilter={setHasAppliedPriceFilter}
+        />
       )}
-      <div className="my-5 mx-auto flex flex-col items-start justify-center md:grid md:grid-cols-[20vw_1fr] gap-4 w-full md:max-w-[800px]">
+      <div className="my-5 mx-auto flex flex-col items-start justify-center md:grid md:grid-cols-[20vw_1fr] gap-4 w-full md:max-w-5xl">
         {/* Show inline filter on large screens only */}
         <div className="hidden md:block">
           <FilterForm
@@ -119,17 +177,26 @@ const HotelList = () => {
             maxPrice={maxPrice}
             setMinPrice={setMinPrice}
             setMaxPrice={setMaxPrice}
+            setHasAppliedPriceFilter={setHasAppliedPriceFilter}
           />
         </div>
         <div className="flex flex-col gap-3 w-full">
           {!isLoading &&
             hotels?.length > 0 &&
-            hotels.map((hotel: Hotel) => (
-              <HotelCard key={hotel.id} hotel={hotel} />
+            hotels.map((hotel: Hotel, index) => (
+              <HotelCard key={`${hotel.id}-${index}`} hotel={hotel} />
             ))}
           {!isLoading && hotels?.length === 0 && (
             <div className="flex justify-center items-center my-5">
               No hotels found.
+            </div>
+          )}
+          {hasNextPage && <LoadMoreTrigger onLoadMore={fetchNextPage} />}
+
+          {/* Optional: loading spinner for next page */}
+          {isFetchingNextPage && (
+            <div className="text-center py-4 flex justify-center items-center">
+              <FaSpinner className="animate-spin" />
             </div>
           )}
         </div>

@@ -1,159 +1,56 @@
-import { useQuery } from "@tanstack/react-query";
-import { Hotel, Room } from "../utils/types";
+import { useInfiniteQuery } from "@tanstack/react-query";
+
 
 type UseHotelsParams = {
-  location?: string;
-  startDate?: Date;
-  endDate?: Date;
+  ss?: string; // location
+  st?: string;
+  startDate?: string;
+  endDate?: string;
+  roomCount?: number;
   adultCount?: number;
   childCount?: number;
-  roomCount?: number;
-  propertyTypes?: string[];
-  minPrice?: number;
-  maxPrice?: number;
+  nightCount?: number;
+  pt?: string;
+  bt?: string;
+  min_price?: number;
+  max_price?: number;
 };
 
-const normalize = (str: string) =>
-  str
-    .toLowerCase()
-    .replace(/\s+/g, "")
-    .replace(/[^a-z]/g, "");
+const buildQueryUrl = (params: UseHotelsParams, page = 1): string => {
+  const query = new URLSearchParams();
+  if (params.ss) query.append("ss", params.ss);
+  if (params.startDate) query.append("startDate", params.startDate);
+  if (params.endDate) query.append("endDate", params.endDate);
+  if (params.roomCount) query.append("roomCount", String(params.roomCount));
+  if (params.adultCount) query.append("adultCount", String(params.adultCount));
+  if (params.childCount) query.append("childCount", String(params.childCount));
+   if (params.pt) query.append("pt", params.pt);
+  if (params.bt) query.append("bt", params.bt); 
+  if (params.min_price) query.append("min_price", String(params.min_price));
+  if (params.max_price) query.append("max_price", String(params.max_price));
 
-const matchesLocation = (hotel: Hotel | undefined, location: string) => {
-  const target = normalize(location);
+  query.append("page", String(page));
 
-  const fields = [
-    hotel?.location_city,
-    hotel?.location_state,
-    hotel?.location_country,
-    hotel?.state?.name,
-    hotel?.state?.slug,
-    hotel?.district?.name,
-    hotel?.district?.state?.name,
-    hotel?.district?.state?.slug,
-    hotel?.country?.name,
-  ];
-
-  return fields.some((field) => normalize(field || "") === target);
+  return `https://sandbox.thetravelhunters.com/hotel/hotels/?${query.toString()}`;
 };
 
-const satisfiesAgeRestriction = (
-  ageRestriction: string | undefined,
-  adultCount: number,
-  childCount: number
-): boolean => {
-  const restriction = parseInt(ageRestriction || "0", 10);
-
-  // If there's a restriction like "18", don't allow children
-  if (!isNaN(restriction) && childCount > 0) {
-    return false;
-  }
-
-  return true;
-};
-
-export const useHotels = ({
-  location,
-  startDate,
-  endDate,
-  adultCount,
-  childCount,
-  roomCount,
-  propertyTypes,
-  minPrice,
-  maxPrice,
-}: UseHotelsParams = {}) => {
-  return useQuery({
-    queryKey: [
-      "hotels",
-      location,
-      startDate?.toISOString(),
-      endDate?.toISOString(),
-      adultCount,
-      childCount,
-      roomCount,
-      propertyTypes,
-      minPrice,
-      maxPrice,
-    ],
-    queryFn: async () => {
-      const res = await fetch("/api/hotels");
+export const useHotels = (params: UseHotelsParams = {}) => {
+  return useInfiniteQuery({
+    queryKey: ["hotels", params],
+    queryFn: async ({ pageParam = 1 }) => {
+      const url = buildQueryUrl(params, pageParam);
+      const res = await fetch(url);
       const data = await res.json();
-      let results = data.results;
+      console.log(data);
 
-      // Location filtering
-      if (location) {
-        results = results.filter((hotel: Hotel) =>
-          hotel.rooms?.some((room: Room) =>
-            matchesLocation(room.hotel, location)
-          )
-        );
-      }
-
-      // Date range filtering
-      if (startDate && endDate) {
-        results = results.filter((hotel: Hotel) =>
-          hotel.rooms?.some((room: Room) =>
-            room.late_night_date?.some((dateObj) => {
-              const d = new Date(dateObj.late_night_date);
-              return d >= startDate && d <= endDate;
-            })
-          )
-        );
-      }
-
-      // Combined capacity filtering
-      if (
-        adultCount !== undefined ||
-        childCount !== undefined ||
-        roomCount !== undefined
-      ) {
-        const requiredPeople = (adultCount || 0) + (childCount || 0);
-        const requiredRooms = roomCount || 1;
-
-        results = results.filter((hotel: Hotel) =>
-          hotel.rooms?.some((room: Room) => {
-            const capacityPerRoom = room.rooms_capacity ?? 0;
-            const availableRooms = room.number_of_rooms ?? 0;
-            const totalCapacity = capacityPerRoom * availableRooms;
-
-            const isAllowed = satisfiesAgeRestriction(
-              hotel.age_restriction,
-              adultCount || 0,
-              childCount || 0
-            );
-
-
-            return (
-              isAllowed &&
-              availableRooms >= requiredRooms &&
-              totalCapacity >= requiredPeople
-            );
-          })
-        );
-      }
-// Property type filter (Hotel / Apartment)
-if (propertyTypes?.length) {
-  results = results.filter((hotel: Hotel) =>
-    hotel.rooms?.some((room: Room) =>
-      propertyTypes.some((type) =>
-        room.room_name?.toLowerCase().includes(type.toLowerCase())
-      )
-    )
-  );
-}
-
-// Price range filter
-results = results.filter((hotel: Hotel) =>
-  hotel.rooms?.every((room: Room) => {
-    const price = room.rooms_rates_per_night ?? 0;
-    return price >= minPrice! && price <= maxPrice!;
-  })
-);
-
-
-      return results;
+      return {
+        count: data.count,
+        hotels: data.results,
+        nextPage: data.next ? pageParam + 1 : undefined, // You can also parse the actual ?page=X from data.next
+      };
     },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
     staleTime: 5 * 60 * 1000,
   });
 };

@@ -112,10 +112,10 @@ const [roomCount, setRoomCount] = useState(initialRooms);
 
     // Option 1: Pass search data via query params
     const queryParams = new URLSearchParams({
-      location,
-       start: formatDate(startDate),
-    end: formatDate(endDate),
-      adultCount: adultCount.toString(),
+     ss: location, // destination
+  startDate: formatDate(startDate),
+  endDate: formatDate(endDate),
+  adultCount: adultCount.toString(),
   childCount: childCount.toString(),
   roomCount: roomCount.toString(),
     });
