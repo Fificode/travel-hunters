@@ -41,7 +41,7 @@ const GuestRow = ({
       <button
         type="button"
         onClick={onDecrement}
-        className="w-6 h-6 rounded-[5px] bg-gray-100 text-center text-sm"
+        className="w-6 h-6 rounded-[5px] bg-gray-100 text-center text-sm cursor-pointer"
       >
         -
       </button>
@@ -49,7 +49,7 @@ const GuestRow = ({
       <button
         type="button"
         onClick={onIncrement}
-        className="w-6 h-6 rounded-[5px] bg-gray-100 text-center text-sm"
+        className="w-6 h-6 rounded-[5px] bg-gray-100 text-center text-sm cursor-pointer"
       >
         +
       </button>
@@ -236,7 +236,7 @@ const [roomCount, setRoomCount] = useState(initialRooms);
                 How many rooms?
               </label>
               <div
-                className="w-full pl-10 pt-5 pr-4 pb-2 border text-[14px] border-gray-300 rounded-md outline-primary cursor-pointer"
+                className="w-full  pl-10 pt-5 pr-4 pb-2 border text-[14px] border-gray-300 rounded-md outline-primary cursor-pointer"
                 onClick={() => setShowGuestDropdown(!showGuestDropdown)}
               >
                 {`${adultCount} Adult${adultCount > 1 ? "s" : ""}, ${childCount} Child${

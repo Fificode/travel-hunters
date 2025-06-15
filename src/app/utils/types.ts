@@ -47,10 +47,11 @@ export interface Hotel {
 export interface Room {
   id: number;
   hotel?: Hotel;
+  room_name: string;
   rooms_capacity?: number;
   number_of_rooms?: number;
   number_of_room_taken: number;
-  room_amenities: Amenity[];
+  rooms_amenities: Amenity[];
   rooms_rates_per_night: number;
   late_night_date?: { late_night_date: string }[];
 }

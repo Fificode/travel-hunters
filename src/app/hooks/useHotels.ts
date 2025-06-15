@@ -8,6 +8,9 @@ type UseHotelsParams = {
   adultCount?: number;
   childCount?: number;
   roomCount?: number;
+  propertyTypes?: string[];
+  minPrice?: number;
+  maxPrice?: number;
 };
 
 const normalize = (str: string) =>
@@ -34,6 +37,21 @@ const matchesLocation = (hotel: Hotel | undefined, location: string) => {
   return fields.some((field) => normalize(field || "") === target);
 };
 
+const satisfiesAgeRestriction = (
+  ageRestriction: string | undefined,
+  adultCount: number,
+  childCount: number
+): boolean => {
+  const restriction = parseInt(ageRestriction || "0", 10);
+
+  // If there's a restriction like "18", don't allow children
+  if (!isNaN(restriction) && childCount > 0) {
+    return false;
+  }
+
+  return true;
+};
+
 export const useHotels = ({
   location,
   startDate,
@@ -41,6 +59,9 @@ export const useHotels = ({
   adultCount,
   childCount,
   roomCount,
+  propertyTypes,
+  minPrice,
+  maxPrice,
 }: UseHotelsParams = {}) => {
   return useQuery({
     queryKey: [
@@ -51,11 +72,12 @@ export const useHotels = ({
       adultCount,
       childCount,
       roomCount,
+      propertyTypes,
+      minPrice,
+      maxPrice,
     ],
     queryFn: async () => {
-      const res = await fetch(
-        "https://sandbox.thetravelhunters.com/hotel/hotels/"
-      );
+      const res = await fetch("/api/hotels");
       const data = await res.json();
       let results = data.results;
 
@@ -80,25 +102,55 @@ export const useHotels = ({
         );
       }
 
- // Combined capacity filtering
-      if (adultCount !== undefined || childCount !== undefined || roomCount !== undefined) {
+      // Combined capacity filtering
+      if (
+        adultCount !== undefined ||
+        childCount !== undefined ||
+        roomCount !== undefined
+      ) {
         const requiredPeople = (adultCount || 0) + (childCount || 0);
         const requiredRooms = roomCount || 1;
 
-        results = results.filter((hotel : Hotel) =>
+        results = results.filter((hotel: Hotel) =>
           hotel.rooms?.some((room: Room) => {
             const capacityPerRoom = room.rooms_capacity ?? 0;
             const availableRooms = room.number_of_rooms ?? 0;
-
             const totalCapacity = capacityPerRoom * availableRooms;
 
+            const isAllowed = satisfiesAgeRestriction(
+              hotel.age_restriction,
+              adultCount || 0,
+              childCount || 0
+            );
+
+
             return (
+              isAllowed &&
               availableRooms >= requiredRooms &&
               totalCapacity >= requiredPeople
             );
           })
         );
       }
+// Property type filter (Hotel / Apartment)
+if (propertyTypes?.length) {
+  results = results.filter((hotel: Hotel) =>
+    hotel.rooms?.some((room: Room) =>
+      propertyTypes.some((type) =>
+        room.room_name?.toLowerCase().includes(type.toLowerCase())
+      )
+    )
+  );
+}
+
+// Price range filter
+results = results.filter((hotel: Hotel) =>
+  hotel.rooms?.every((room: Room) => {
+    const price = room.rooms_rates_per_night ?? 0;
+    return price >= minPrice! && price <= maxPrice!;
+  })
+);
+
 
       return results;
     },
