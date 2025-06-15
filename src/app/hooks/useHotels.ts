@@ -31,7 +31,7 @@ const buildQueryUrl = (params: UseHotelsParams, page = 1): string => {
 
   query.append("page", String(page));
 
-  return `https://sandbox.thetravelhunters.com/hotel/hotels/?${query.toString()}`;
+  return `api/hotels/?${query.toString()}`;
 };
 
 export const useHotels = (params: UseHotelsParams = {}) => {

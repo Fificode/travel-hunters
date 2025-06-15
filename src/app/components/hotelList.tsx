@@ -138,7 +138,7 @@ const totalCount = data?.pages?.[0]?.count || 0;
         <div className="flex justify-center items-center my-5">Error ...</div>
       )}
       {!isLoading && (
-  <h2 className="text-xl font-semibold">
+  <h2 className="text-xl font-semibold my-5 flex justify-center items-center">
     {totalCount} Properties found{location ? ` in ${location}` : ""}
   </h2>
 )}
